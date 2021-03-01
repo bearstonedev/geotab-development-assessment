@@ -5,20 +5,25 @@ using Newtonsoft.Json;
 
 namespace JokeGenerator
 {
-    class JsonFeed
+    public class JokeGeneratorApi
     {
-        static string _url = "";
+        private readonly HttpClient client;
 
-        public JsonFeed() { }
-        public JsonFeed(string endpoint, int results)
+        public JokeGeneratorApi(string endpoint) : this(new HttpClientHandler(), endpoint)
         {
-            _url = endpoint;
         }
 
-        public static string[] GetRandomJokes(string firstname, string lastname, string category)
+        // Creates the API instance with a provided HTTP handler. Intended for use in unit tests to mock out network calls.
+        public JokeGeneratorApi(HttpMessageHandler messageHandler, string baseAddress)
         {
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(_url);
+            this.client = new HttpClient(messageHandler)
+            {
+                BaseAddress = new Uri(baseAddress)
+            };
+        }
+
+        public string[] GetRandomJokes(string firstname, string lastname, string category)
+        {
             string url = "jokes/random";
             if (category != null)
             {
@@ -47,20 +52,15 @@ namespace JokeGenerator
         /// </summary>
         /// <param name="client2"></param>
         /// <returns></returns>
-		public static dynamic Getnames()
+		public dynamic GetNames()
         {
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(_url);
             var result = client.GetStringAsync("").Result;
             return JsonConvert.DeserializeObject<dynamic>(result);
         }
 
-        public static string[] GetCategories()
+        public string[] GetCategories()
         {
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(_url);
-
-            return new string[] { Task.FromResult(client.GetStringAsync("categories").Result).Result };
+            return new string[] { Task.FromResult(client.GetStringAsync("/jokes/categories").Result).Result };
         }
     }
 }

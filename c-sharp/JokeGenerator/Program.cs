@@ -21,7 +21,7 @@ namespace JokeGenerator
                     GetEnteredKey(Console.ReadKey());
                     if (key == 'c')
                     {
-                        getCategories();
+                        GetCategories();
                         PrintResults();
                     }
                     if (key == 'r')
@@ -103,20 +103,17 @@ namespace JokeGenerator
 
         private static void GetRandomJokes(string category, int number)
         {
-            new JsonFeed("https://api.chucknorris.io", number);
-            results = JsonFeed.GetRandomJokes(names?.Item1, names?.Item2, category);
+            results = new JokeGeneratorApi("https://api.chucknorris.io").GetRandomJokes(names?.Item1, names?.Item2, category);
         }
 
-        private static void getCategories()
+        private static void GetCategories()
         {
-            new JsonFeed("https://api.chucknorris.io", 0);
-            results = JsonFeed.GetCategories();
+            results = new JokeGeneratorApi("https://api.chucknorris.io").GetCategories();
         }
 
         private static void GetNames()
         {
-            new JsonFeed("https://www.names.privserv.com/api/", 0);
-            dynamic result = JsonFeed.Getnames();
+            dynamic result = new JokeGeneratorApi("https://www.names.privserv.com/api/").GetNames();
             names = Tuple.Create(result.name.ToString(), result.surname.ToString());
         }
     }
