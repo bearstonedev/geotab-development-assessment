@@ -23,6 +23,12 @@ namespace JokeGenerator
             this.client.DefaultRequestHeaders.Add("Accept", "application/json");
         }
 
+        public string[] GetRandomJoke()
+        {
+            dynamic response = Get<dynamic>("jokes/random");
+            return new string[] { response.value };
+        }
+
         public string[] GetRandomJokes(string firstname, string lastname, string category)
         {
             string url = "jokes/random";
