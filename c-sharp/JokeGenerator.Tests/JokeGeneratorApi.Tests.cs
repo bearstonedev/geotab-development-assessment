@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -13,32 +14,56 @@ namespace JokeGenerator.Tests
     {
         private JokeGeneratorApi sut;
         private Mock<HttpMessageHandler> mockMessageHandler;
-        private const string categories = @"[""animal"",""career"",""celebrity"",""dev"",""explicit"",""fashion"",""food"",""history"",""money"",""movie"",""music"",""political"",""religion"",""science"",""sport"",""travel""]";
+        private const string baseAddress = "https://api.chucknorris.io";
+        private readonly string[] categories = {
+            "some",
+            "categories",
+            "for",
+            "testing"
+        };
 
         public JokeGeneratorApiTests()
         {
             Console.WriteLine("Setting up tests.");
-            this.CreateSystemUnderTest();
+            this.CreateSystemUnderTest(baseAddress);
         }
 
         [Fact]
         public void ShouldGetCategories()
         {
-            var expected = new string[] { categories };
+            var expected = categories;
             var actual = this.sut.GetCategories();
             Assert.Equal<string[]>(expected, actual);
+            this.mockMessageHandler.Protected().Verify(
+                "SendAsync",
+                Times.Exactly(1),
+                ItExpr.Is<HttpRequestMessage>(req =>
+                    req.Method == HttpMethod.Get
+                    && req.RequestUri.ToString() == $"{baseAddress}/jokes/categories"
+                    && req.Headers.GetValues("Accept").FirstOrDefault() == "application/json"),
+                ItExpr.IsAny<CancellationToken>()
+            );
         }
 
-        private void CreateSystemUnderTest()
+        private void CreateSystemUnderTest(string baseAddress)
         {
             var mockMessageHandler = new Mock<HttpMessageHandler>();
-            mockMessageHandler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage()
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(categories)
-            }).Verifiable();
+            mockMessageHandler.Protected().Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                ).ReturnsAsync(new HttpResponseMessage()
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(@"[
+                        ""some"",
+                        ""categories"",
+                        ""for"",
+                        ""testing"",
+                    ]")
+                }).Verifiable();
             this.mockMessageHandler = mockMessageHandler;
-            this.sut = new JokeGeneratorApi(mockMessageHandler.Object, "https://api.chucknorris.io");
+            this.sut = new JokeGeneratorApi(mockMessageHandler.Object, baseAddress);
         }
     }
 }

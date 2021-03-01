@@ -20,6 +20,7 @@ namespace JokeGenerator
             {
                 BaseAddress = new Uri(baseAddress)
             };
+            this.client.DefaultRequestHeaders.Add("Accept", "application/json");
         }
 
         public string[] GetRandomJokes(string firstname, string lastname, string category)
@@ -60,7 +61,14 @@ namespace JokeGenerator
 
         public string[] GetCategories()
         {
-            return new string[] { Task.FromResult(client.GetStringAsync("/jokes/categories").Result).Result };
+            return Get<string[]>("/jokes/categories");
+        }
+
+        private T Get<T>(string path)
+        {
+            var result = client.GetStringAsync(path).Result;
+            var deserializedResult = JsonConvert.DeserializeObject<T>(result);
+            return deserializedResult;
         }
     }
 }
