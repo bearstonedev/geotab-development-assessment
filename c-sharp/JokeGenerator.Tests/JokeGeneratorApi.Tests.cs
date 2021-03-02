@@ -15,7 +15,7 @@ namespace JokeGenerator.Tests
     {
         private readonly JokeGeneratorApi sut;
         private readonly Mock<HttpMessageHandler> mockMessageHandler;
-        private const string norrisJokesBaseAddress = "https://api.chucknorris.io/jokes";
+        private const string norrisJokesBaseAddress = "https://api.chucknorris.io/jokes/";
 
         public JokeGeneratorApiTests()
         {
@@ -34,7 +34,7 @@ namespace JokeGenerator.Tests
             };
             this.MockResponse(expected);
             var actual = this.sut.GetCategories();
-            this.VerifyRequest(1, $"{norrisJokesBaseAddress}/categories");
+            this.VerifyRequest(1, $"{norrisJokesBaseAddress}categories");
             Assert.Equal<string[]>(expected, actual);
         }
 
@@ -44,18 +44,27 @@ namespace JokeGenerator.Tests
             string[] expected = { "An hilarious joke!" };
             this.MockResponseSequence(expected);
             var actual = await this.sut.GetRandomJokes();
-            this.VerifyRequest(1, $"{norrisJokesBaseAddress}/random");
+            this.VerifyRequest(1, $"{norrisJokesBaseAddress}random");
             Assert.Equal(expected, actual);
         }
 
         [Fact]
         public async void ShouldGetManyRandomJokes()
         {
-            const string hilariousJoke = "An hilarious joke!";
-            string[] expected = Enumerable.Range(0, 9).Select(_ => hilariousJoke).ToArray();
+            string[] expected = Enumerable.Range(0, 9).Select(_ => "An hilarious joke!").ToArray();
             this.MockResponseSequence(expected);
             var actual = await this.sut.GetRandomJokes(9);
-            this.VerifyRequest(9, $"{norrisJokesBaseAddress}/random");
+            this.VerifyRequest(9, $"{norrisJokesBaseAddress}random");
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public async void ShouldGetRandomJokesFromGivenCategory()
+        {
+            string[] expected = { "An hilarious joke!", "Another hilarious joke!" };
+            this.MockResponseSequence(expected);
+            var actual = await this.sut.GetRandomJokes(2, "theCategory");
+            this.VerifyRequest(2, $"{norrisJokesBaseAddress}random?category=theCategory");
             Assert.Equal(expected, actual);
         }
 

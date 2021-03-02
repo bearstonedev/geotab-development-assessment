@@ -103,12 +103,12 @@ namespace JokeGenerator
 
         private static void GetRandomJokes(string category, int number)
         {
-            results = new JokeGeneratorApi("https://api.chucknorris.io").GetRandomJokes(names?.Item1, names?.Item2, category);
+            results = new JokeGeneratorApi("https://api.chucknorris.io/jokes/").GetRandomJokes(names?.Item1, names?.Item2, category);
         }
 
         private static void GetCategories()
         {
-            results = new JokeGeneratorApi("https://api.chucknorris.io").GetCategories();
+            results = new JokeGeneratorApi("https://api.chucknorris.io/jokes/").GetCategories();
         }
 
         private static void GetNames()

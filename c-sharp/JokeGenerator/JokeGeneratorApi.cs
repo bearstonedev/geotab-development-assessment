@@ -11,6 +11,10 @@ namespace JokeGenerator
     {
         private readonly HttpClient client;
 
+        private const string randomJokePath = "random";
+
+        private const string categoriesPath = "categories";
+
         public JokeGeneratorApi(string endpoint) : this(new HttpClientHandler(), endpoint)
         {
         }
@@ -25,19 +29,30 @@ namespace JokeGenerator
             this.client.DefaultRequestHeaders.Add("Accept", "application/json");
         }
 
-        public async Task<string[]> GetRandomJokes(int numberOfJokes = 1)
+        public async Task<string[]> GetRandomJokes(int numberOfJokes = 1, string category = "")
         {
-            var jokeTasks = new List<Task<string>>(Enumerable.Range(0, numberOfJokes).Select(_ => GetRandomJoke()));
+            var jokeTasks = new List<Task<string>>(Enumerable.Range(0, numberOfJokes).Select(_ => GetRandomJoke(category)));
             var aggregateTask = Task.WhenAll(jokeTasks.ToArray());
             return await aggregateTask;
         }
 
-        private async Task<string> GetRandomJoke()
+        private async Task<string> GetRandomJoke(string category)
         {
-            var requestTask = Get<dynamic>("jokes/random");
+            var path = BuildRandomJokePath(category);
+            var requestTask = Get<dynamic>(path);
             await requestTask;
             var joke = ParseJokeResponse(requestTask.Result);
             return joke;
+        }
+
+        private string BuildRandomJokePath(string category)
+        {
+            if (string.IsNullOrWhiteSpace(category))
+            {
+                return JokeGeneratorApi.randomJokePath;
+            }
+
+            return $"{JokeGeneratorApi.randomJokePath}?{nameof(category)}={category}";
         }
 
         private string ParseJokeResponse(dynamic jokeResponse)
@@ -83,7 +98,7 @@ namespace JokeGenerator
 
         public string[] GetCategories()
         {
-            return Get<string[]>("/jokes/categories").Result;
+            return Get<string[]>(JokeGeneratorApi.categoriesPath).Result;
         }
 
         private async Task<T> Get<T>(string path)
