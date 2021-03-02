@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -23,10 +25,24 @@ namespace JokeGenerator
             this.client.DefaultRequestHeaders.Add("Accept", "application/json");
         }
 
-        public string[] GetRandomJoke()
+        public async Task<string[]> GetRandomJokes(int numberOfJokes = 1)
         {
-            dynamic response = Get<dynamic>("jokes/random");
-            return new string[] { response.value };
+            var jokeTasks = new List<Task<string>>(Enumerable.Range(0, numberOfJokes).Select(_ => GetRandomJoke()));
+            var aggregateTask = Task.WhenAll(jokeTasks.ToArray());
+            return await aggregateTask;
+        }
+
+        private async Task<string> GetRandomJoke()
+        {
+            var requestTask = Get<dynamic>("jokes/random");
+            await requestTask;
+            var joke = ParseJokeResponse(requestTask.Result);
+            return joke;
+        }
+
+        private string ParseJokeResponse(dynamic jokeResponse)
+        {
+            return jokeResponse.value;
         }
 
         public string[] GetRandomJokes(string firstname, string lastname, string category)
@@ -67,13 +83,19 @@ namespace JokeGenerator
 
         public string[] GetCategories()
         {
-            return Get<string[]>("/jokes/categories");
+            return Get<string[]>("/jokes/categories").Result;
         }
 
-        private T Get<T>(string path)
+        private async Task<T> Get<T>(string path)
         {
-            var result = client.GetStringAsync(path).Result;
-            var deserializedResult = JsonConvert.DeserializeObject<T>(result);
+            var requestTask = client.GetStringAsync(path);
+            var deserializedResponse = Deserialize<T>(await requestTask);
+            return deserializedResponse;
+        }
+
+        private T Deserialize<T>(string jsonResponse)
+        {
+            var deserializedResult = JsonConvert.DeserializeObject<T>(jsonResponse);
             return deserializedResult;
         }
     }
