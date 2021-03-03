@@ -22,7 +22,7 @@ namespace JokeGenerator
             this.client.DefaultRequestHeaders.Add("Accept", "application/json");
         }
 
-        public async Task<T> Get<T>(string path)
+        public async Task<T> Get<T>(string path = "")
         {
             var requestTask = client.GetStringAsync(path);
             return Deserialize<T>(await requestTask);

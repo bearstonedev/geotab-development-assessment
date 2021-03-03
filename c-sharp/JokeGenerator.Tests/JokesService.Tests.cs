@@ -1,11 +1,4 @@
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Moq;
-using Moq.Protected;
-using Newtonsoft.Json;
 using Xunit;
 
 namespace JokeGenerator.Tests
@@ -13,19 +6,19 @@ namespace JokeGenerator.Tests
     public class JokesServiceTests
     {
         private readonly JokesService sut;
-        private readonly Mock<HttpMessageHandler> mockMessageHandler;
-        private const string norrisJokesBaseAddress = "https://api.chucknorris.io/jokes/";
+        private readonly MockHttpUtility mockHttpUtil;
+        private const string baseAddress = "https://baseaddress.com";
 
         public JokesServiceTests()
         {
-            this.mockMessageHandler = new Mock<HttpMessageHandler>();
-            this.sut = CreateJokeGeneratorApi();
+            this.mockHttpUtil = new MockHttpUtility();
+            this.sut = CreateSystemUnderTest(mockHttpUtil);
         }
 
-        private JokesService CreateJokeGeneratorApi()
+        private JokesService CreateSystemUnderTest(MockHttpUtility mockUtil)
         {
-            var jokesService = new ApiService(this.mockMessageHandler.Object, norrisJokesBaseAddress);
-            return new JokesService(jokesService);
+            var api = new ApiService(mockUtil.MockedHttpHandler, baseAddress);
+            return new JokesService(api);
         }
 
         [Fact]
@@ -37,9 +30,9 @@ namespace JokeGenerator.Tests
                 "for",
                 "testing"
             };
-            this.MockResponse(expected);
+            this.mockHttpUtil.MockResponse(expected);
             var actual = this.sut.GetCategories();
-            this.VerifyRequest(1, $"{norrisJokesBaseAddress}categories");
+            this.mockHttpUtil.VerifyRequest(1, $"{baseAddress}/categories");
             Assert.Equal<string[]>(expected, actual);
         }
 
@@ -47,9 +40,9 @@ namespace JokeGenerator.Tests
         public async void ShouldGetOneRandomJoke()
         {
             string[] expected = { "An hilarious joke!" };
-            this.MockResponseSequence(expected);
+            this.mockHttpUtil.MockResponseSequence(expected.Select(joke => new { value = joke }).ToArray());
             var actual = await this.sut.GetRandomJokes();
-            this.VerifyRequest(1, $"{norrisJokesBaseAddress}random");
+            this.mockHttpUtil.VerifyRequest(1, $"{baseAddress}/random");
             Assert.Equal(expected, actual);
         }
 
@@ -57,9 +50,9 @@ namespace JokeGenerator.Tests
         public async void ShouldGetManyRandomJokes()
         {
             string[] expected = Enumerable.Range(0, 9).Select(_ => "An hilarious joke!").ToArray();
-            this.MockResponseSequence(expected);
+            this.mockHttpUtil.MockResponseSequence(expected.Select(joke => new { value = joke }).ToArray());
             var actual = await this.sut.GetRandomJokes(9);
-            this.VerifyRequest(9, $"{norrisJokesBaseAddress}random");
+            this.mockHttpUtil.VerifyRequest(9, $"{baseAddress}/random");
             Assert.Equal(expected, actual);
         }
 
@@ -67,54 +60,10 @@ namespace JokeGenerator.Tests
         public async void ShouldGetRandomJokesFromGivenCategory()
         {
             string[] expected = { "An hilarious joke!", "Another hilarious joke!" };
-            this.MockResponseSequence(expected);
+            this.mockHttpUtil.MockResponseSequence(expected.Select(joke => new { value = joke }).ToArray());
             var actual = await this.sut.GetRandomJokes(2, "theCategory");
-            this.VerifyRequest(2, $"{norrisJokesBaseAddress}random?category=theCategory");
+            this.mockHttpUtil.VerifyRequest(2, $"{baseAddress}/random?category=theCategory");
             Assert.Equal(expected, actual);
-        }
-
-        private void MockResponse<T>(T payload)
-        {
-            this.mockMessageHandler.Protected().Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            ).ReturnsAsync(new HttpResponseMessage()
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(JsonConvert.SerializeObject(payload))
-            }).Verifiable();
-        }
-
-        private void MockResponseSequence<T>(T[] payloadSequence)
-        {
-            var mockSequence = this.mockMessageHandler.Protected().SetupSequence<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            );
-            foreach (T payload in payloadSequence)
-            {
-                var serialized = JsonConvert.SerializeObject(new { value = payload });
-                mockSequence.ReturnsAsync(new HttpResponseMessage()
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent(serialized)
-                });
-            }
-        }
-
-        private void VerifyRequest(int expectedCalls, string targetUrl)
-        {
-            this.mockMessageHandler.Protected().Verify(
-                "SendAsync",
-                Times.Exactly(expectedCalls),
-                ItExpr.Is<HttpRequestMessage>(req =>
-                    req.Method == HttpMethod.Get
-                    && req.RequestUri.ToString() == targetUrl
-                    && req.Headers.GetValues("Accept").FirstOrDefault() == "application/json"),
-                ItExpr.IsAny<CancellationToken>()
-            );
         }
     }
 }
