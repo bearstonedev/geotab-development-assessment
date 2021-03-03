@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -11,16 +10,22 @@ using Xunit;
 
 namespace JokeGenerator.Tests
 {
-    public class JokeGeneratorApiTests
+    public class JokesServiceTests
     {
-        private readonly JokeGeneratorApi sut;
+        private readonly JokesService sut;
         private readonly Mock<HttpMessageHandler> mockMessageHandler;
         private const string norrisJokesBaseAddress = "https://api.chucknorris.io/jokes/";
 
-        public JokeGeneratorApiTests()
+        public JokesServiceTests()
         {
             this.mockMessageHandler = new Mock<HttpMessageHandler>();
-            this.sut = new JokeGeneratorApi(mockMessageHandler.Object, norrisJokesBaseAddress);
+            this.sut = CreateJokeGeneratorApi();
+        }
+
+        private JokesService CreateJokeGeneratorApi()
+        {
+            var jokesService = new ApiService(this.mockMessageHandler.Object, norrisJokesBaseAddress);
+            return new JokesService(jokesService);
         }
 
         [Fact]
