@@ -48,42 +48,6 @@ namespace JokeGenerator
             return jokeResponse.value;
         }
 
-        // public string[] GetRandomJokes(string firstname, string lastname, string category)
-        // {
-        //     string url = "jokes/random";
-        //     if (category != null)
-        //     {
-        //         if (url.Contains('?'))
-        //             url += "&";
-        //         else url += "?";
-        //         url += "category=";
-        //         url += category;
-        //     }
-
-        //     string joke = Task.FromResult(client.GetStringAsync(url).Result).Result;
-
-        //     if (firstname != null && lastname != null)
-        //     {
-        //         int index = joke.IndexOf("Chuck Norris");
-        //         string firstPart = joke.Substring(0, index);
-        //         string secondPart = joke.Substring(0 + index + "Chuck Norris".Length, joke.Length - (index + "Chuck Norris".Length));
-        //         joke = firstPart + " " + firstname + " " + lastname + secondPart;
-        //     }
-
-        //     return new string[] { JsonConvert.DeserializeObject<dynamic>(joke).value };
-        // }
-
-        /// <summary>
-        /// returns an object that contains name and surname
-        /// </summary>
-        /// <param name="client2"></param>
-        /// <returns></returns>
-		// public dynamic GetNames()
-        // {
-        //     var result = client.GetStringAsync("").Result;
-        //     return JsonConvert.DeserializeObject<dynamic>(result);
-        // }
-
         public string[] GetCategories()
         {
             return api.Get<string[]>(JokesService.categoriesPath).Result;
