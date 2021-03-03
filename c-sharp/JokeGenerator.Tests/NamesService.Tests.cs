@@ -23,11 +23,11 @@ namespace JokeGenerator.Tests
         [Fact]
         public async void ShouldGetNames()
         {
-            (string first, string last) expected = ("firstname", "lastname");
-            this.mockUtil.MockResponse(new { name = expected.first, surname = expected.last });
+            (string first, string last, Genders gender) expected = ("firstname", "lastname", Genders.Agender);
+            this.mockUtil.MockResponse(new { name = expected.first, surname = expected.last, gender = expected.gender.ToString() });
             var actual = await this.sut.GetRandomName();
             this.mockUtil.VerifyRequest(1, $"{baseAddress}");
-            Assert.Equal<(string, string)>(expected, actual);
+            Assert.Equal<(string, string, Genders)>(expected, actual);
         }
     }
 }

@@ -22,7 +22,7 @@ namespace JokeGenerator.Tests
         }
 
         [Fact]
-        public void ShouldGetCategories()
+        public async void ShouldGetCategories()
         {
             string[] expected = {
                 "some",
@@ -31,7 +31,7 @@ namespace JokeGenerator.Tests
                 "testing"
             };
             this.mockHttpUtil.MockResponse(expected);
-            var actual = this.sut.GetCategories();
+            var actual = await this.sut.GetCategories();
             this.mockHttpUtil.VerifyRequest(1, $"{baseAddress}/categories");
             Assert.Equal<string[]>(expected, actual);
         }

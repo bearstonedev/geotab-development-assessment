@@ -48,9 +48,9 @@ namespace JokeGenerator
             return jokeResponse.value;
         }
 
-        public string[] GetCategories()
+        public async Task<string[]> GetCategories()
         {
-            return api.Get<string[]>(JokesService.categoriesPath).Result;
+            return await api.Get<string[]>(JokesService.categoriesPath);
         }
     }
 }
